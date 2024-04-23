@@ -64,6 +64,27 @@ func TestMap(t *testing.T) {
 	errorIfNotEqual(t, "Operator", person.Role[1].Name)
 }
 
+func TestMetaMap(t *testing.T) {
+	L := lua.NewState()
+	if err := L.DoString(`
+    person = {
+      work_place = "San Jose",
+    }
+	setmetatable(person, {__index = {
+		name = "Michel"
+	}})
+	`); err != nil {
+		t.Error(err)
+	}
+	var person testPerson
+	personTable := L.GetGlobal("person")
+	if err := Map(personTable.(*lua.LTable), &person); err != nil {
+		t.Error(err)
+	}
+	errorIfNotEqual(t, "Michel", person.Name)
+	errorIfNotEqual(t, "San Jose", person.WorkPlace)
+}
+
 func TestTypes(t *testing.T) {
 	L := lua.NewState()
 	if err := L.DoString(`

@@ -94,6 +94,21 @@ func ToGoValue(lv lua.LValue, opt Option) interface{} {
 				keystr := fmt.Sprint(ToGoValue(key, opt))
 				ret[opt.NameFunc(keystr)] = ToGoValue(value, opt)
 			})
+			meta, ok := v.Metatable.(*lua.LTable)
+			if !ok {
+				return ret
+			}
+			switch indexV := meta.RawGetString("__index").(type) {
+			case *lua.LTable:
+				for key, value := range ToGoValue(indexV, opt).(map[interface{}]interface{}) {
+					if _, ok := ret[key]; ok {
+						continue
+					}
+					ret[key] = value
+				}
+			case *lua.LFunction:
+				panic("unsupported __index function")
+			}
 			return ret
 		} else { // array
 			ret := make([]interface{}, 0, maxn)
